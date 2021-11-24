@@ -1,0 +1,29 @@
+#!/bin/sh
+set -ex
+
+
+itis=$(date '+%Y-%m-%d-%H-%M-%S')
+fname="${itis}.png"
+src="${HOME:-/home/danielhaskin}/Pictures"
+dest="HomeGoogleDrive:/Screenshots"
+
+#echo "startup"
+#mkdir -p "${src}"
+#rclone mkdir "${dest}"
+
+echo "screenshot"
+maim -s "${src}/${fname}"
+echo "copy"
+rclone copy "${src}/${fname}" "${dest}/"
+echo "clipboard"
+#rclone link --expire 4h "${dest}/${fname}" | xsel -ib
+#printf "https://drive.google.com/uc?id=${download_id}" | xsel -ib
+raw_link=$(rclone link --expire 4h "${dest}/${fname}")
+if [ "${1}" = "--raw" ]
+then
+    printf "${raw_link}" | xsel -ib
+else
+    file_id=$(printf "${raw_link}" | sed -e 's|^[^?]*[?]id=||')
+    printf "https://drive.google.com/uc?id=${file_id}&filename=${fname}" | xsel -ib
+fi
+zenity --title "screen2gdrive" --info --text "URL copied to clipboard"
